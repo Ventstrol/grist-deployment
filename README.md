@@ -9,4 +9,3 @@ If you want to have SSL you should:
 - create subdomains (from env file)
 - uncomment production resolver
 - uncomment tsl
-- 
