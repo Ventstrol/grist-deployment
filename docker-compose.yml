@@ -43,6 +43,7 @@ services:
           - "${GRAFANA_DOMAIN:?}"
           - "${PROMETHEUS_DOMAIN:?}"
           - "${TRAEFIK_DOMAIN:?}"
+          - "${BOARD_DOMAIN:?}"
     ports:
       - "80:80/tcp" # HTTP.
       - "443:443/tcp" # HTTPS.
@@ -67,6 +68,7 @@ services:
       TRAEFIK_DOMAIN: "${TRAEFIK_DOMAIN:?}"
       CF_DNS_API_TOKEN: "${CF_DNS_API_TOKEN:-}"
       CF_ZONE_API_TOKEN: "${CF_ZONE_API_TOKEN:-}"
+      BOARD_DOMAIN: "${BOARD_DOMAIN:-}"
     healthcheck:
       test: ["CMD", "traefik", "healthcheck"]
       start_period: "5m"
@@ -93,7 +95,22 @@ services:
         raw.githubusercontent.com
         objects.githubusercontent.com
         grafana.com
-
+  board:
+    image: "mattermost/focalboard:latest"
+    container_name: "docs-board"
+    networks:
+      - "private"
+    volumes:
+      - "board-data:/var/lib/focalboard"
+    environment:
+      - "FB_DBTYPE=sqlite3"
+      - "FB_DBSTRING=file:/var/lib/focalboard/focalboard.db?cache=shared&mode=rwc"
+    labels:
+      - "traefik.http.routers.focalboard.rule=Host(`${BOARD_DOMAIN:?}`)"
+      - "traefik.http.routers.focalboard.entrypoints=websecure"
+      - "traefik.http.routers.focalboard.tls=true"
+      - "traefik.http.routers.focalboard.tls.certresolver=${TRAEFIK_TLS_RESOLVER:?}"
+      
   grist:
     image: *grist-image
     restart: "always"
@@ -520,7 +537,10 @@ volumes:
 
   redis-authentik-data:
     name: "docs-redis-authentik-data"
-
+    
+  board-data:
+    name: "board-data"
+    
 networks:
 
   public:
