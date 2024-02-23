@@ -74,6 +74,14 @@ http:
       service: "api@internal"
       tls:
         certResolver: '{{ env "TRAEFIK_TLS_RESOLVER" }}'
+    board:
+      rule: 'Host(`{{ env "BOARD_DOMAIN" }}`)'
+      entryPoints: ["https"]
+      middlewares: ["compress", "security-headers"]
+      service: "board"
+      tls:
+        certResolver: '{{ env "TRAEFIK_TLS_RESOLVER" }}'
+     
   middlewares:
     https-redirect:
       redirectScheme:
@@ -224,6 +232,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://prometheus:9090"
+    board:
+      loadBalancer:
+        servers:
+          - url: "http://board:8000"
 tcp:
   routers:
     authentik-ldap:
